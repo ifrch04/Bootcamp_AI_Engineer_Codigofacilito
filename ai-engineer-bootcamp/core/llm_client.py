@@ -1,7 +1,8 @@
-"""Provider-agnostic LLM client abstraction (Gemini implementation)."""
+"""Provider-agnostic LLM client abstraction (Gemini & Groq)."""
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
 import time
 from typing import Any
@@ -42,16 +43,31 @@ class LLMClient:
         self.input_cost_per_1m_tokens = settings.input_cost_per_1m_tokens
         self.output_cost_per_1m_tokens = settings.output_cost_per_1m_tokens
 
-        if self.provider != "gemini":
-            raise ValueError(
-                f"Unsupported provider '{self.provider}'. Only 'gemini' is supported."
-            )
+        if self.provider == "gemini":
+            # Prefer GEMINI_MODEL env var over the generic LLM_MODEL.
+            self.model = model or os.environ.get("GEMINI_MODEL", settings.llm_model)
+            # The SDK reads GEMINI_API_KEY from environment variables.
+            self.client = genai.Client()
+        elif self.provider == "groq":
+            from groq import Groq
 
-        # The SDK reads GEMINI_API_KEY from environment variables.
-        self.client = genai.Client()
+            api_key = os.environ.get("GROQ_API_KEY", "")
+            if not api_key:
+                raise ValueError("Missing GROQ_API_KEY environment variable.")
+            self.model = model or os.environ.get(
+                "GROQ_MODEL", "llama-3.3-70b-versatile"
+            )
+            self.client = Groq(api_key=api_key)
+        else:
+            raise ValueError(
+                f"Unsupported provider '{self.provider}'. Supported: 'gemini', 'groq'."
+            )
 
     def chat(self, messages: list[dict[str, str]] | str, **kwargs: Any) -> dict[str, Any]:
         """Send messages to the configured model and return response + metadata."""
+        if self.provider == "groq":
+            return self._chat_groq(messages, **kwargs)
+
         prompt = self._messages_to_prompt(messages)
         if not prompt:
             raise ValueError("messages cannot be empty.")
@@ -176,6 +192,81 @@ class LLMClient:
             except (TypeError, ValueError):
                 continue
         return 0
+
+    def _chat_groq(self, messages: list[dict[str, str]] | str, **kwargs: Any) -> dict[str, Any]:
+        """Handle chat via the Groq API (OpenAI-compatible)."""
+        if isinstance(messages, str):
+            groq_messages = [{"role": "user", "content": messages}]
+        elif isinstance(messages, list):
+            groq_messages = [
+                {"role": m.get("role", "user"), "content": m.get("content", "")}
+                for m in messages
+            ]
+        else:
+            raise TypeError("messages must be either a string or a list of dicts.")
+
+        config = kwargs.pop("config", None) or {}
+        if isinstance(config, dict):
+            config = dict(config)
+        else:
+            config = {}
+        config.update(kwargs)
+
+        max_tokens = config.pop("max_output_tokens", config.pop("max_tokens", 1024))
+        temperature = config.pop("temperature", self.temperature)
+
+        started = time.perf_counter()
+        try:
+            response = self.client.chat.completions.create(
+                model=self.model,
+                messages=groq_messages,
+                max_tokens=max_tokens,
+                temperature=temperature,
+            )
+        except Exception as exc:
+            logger.exception(
+                "LLM call failed | provider=%s | model=%s",
+                self.provider,
+                self.model,
+            )
+            raise RuntimeError("Failed to call the LLM provider.") from exc
+
+        latency_ms = (time.perf_counter() - started) * 1000
+
+        text = (response.choices[0].message.content or "").strip()
+
+        prompt_tokens = getattr(response.usage, "prompt_tokens", 0) or 0
+        completion_tokens = getattr(response.usage, "completion_tokens", 0) or 0
+        total_tokens = prompt_tokens + completion_tokens
+        estimated_cost_usd = self._estimate_cost(prompt_tokens, completion_tokens)
+
+        metrics = UsageMetrics(
+            prompt_tokens=prompt_tokens,
+            completion_tokens=completion_tokens,
+            total_tokens=total_tokens,
+            latency_ms=latency_ms,
+            estimated_cost_usd=estimated_cost_usd,
+        )
+        self.log_usage(metrics)
+
+        if not text:
+            raise RuntimeError("The LLM returned an empty response.")
+
+        return {
+            "response": text,
+            "metadata": {
+                "provider": self.provider,
+                "model": self.model,
+                "temperature": self.temperature,
+                "usage": {
+                    "prompt_tokens": metrics.prompt_tokens,
+                    "completion_tokens": metrics.completion_tokens,
+                    "total_tokens": metrics.total_tokens,
+                },
+                "latency_ms": round(metrics.latency_ms, 2),
+                "estimated_cost_usd": round(metrics.estimated_cost_usd, 8),
+            },
+        }
 
     def _messages_to_prompt(self, messages: list[dict[str, str]] | str) -> str:
         if isinstance(messages, str):

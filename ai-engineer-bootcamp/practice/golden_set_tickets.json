@@ -1,0 +1,17 @@
+[
+  {"input": "No puedo iniciar sesión, me dice contraseña incorrecta", "expected": {"categoria": "acceso", "prioridad": "alta"}},
+  {"input": "El dashboard tarda 30 segundos en cargar", "expected": {"categoria": "rendimiento", "prioridad": "media"}},
+  {"input": "Necesito la factura del mes pasado", "expected": {"categoria": "facturacion", "prioridad": "baja"}},
+  {"input": "URGENTE: toda la plataforma está caída, 200 usuarios afectados", "expected": {"categoria": "infraestructura", "prioridad": "critica"}},
+  {"input": "¿Pueden agregar modo oscuro?", "expected": {"categoria": "feature_request", "prioridad": "baja"}},
+  {"input": "El botón de exportar PDF no hace nada cuando lo presiono", "expected": {"categoria": "bug", "prioridad": "media"}},
+  {"input": "Los datos del reporte de ventas muestran cifras del mes pasado, no del actual", "expected": {"categoria": "datos", "prioridad": "alta"}},
+  {"input": "Me cobraron dos veces la suscripción de este mes", "expected": {"categoria": "facturacion", "prioridad": "alta"}},
+  {"input": "La app se cierra sola cada vez que abro el módulo de inventario", "expected": {"categoria": "bug", "prioridad": "alta"}},
+  {"input": "Quiero cambiar mi correo de acceso a la plataforma", "expected": {"categoria": "acceso", "prioridad": "baja"}},
+  {"input": "El servidor responde con error 500 intermitente desde hace 2 horas", "expected": {"categoria": "infraestructura", "prioridad": "critica"}},
+  {"input": "Sería genial tener integración con Slack para notificaciones", "expected": {"categoria": "feature_request", "prioridad": "baja"}},
+  {"input": "Las gráficas del analytics no cargan en Safari", "expected": {"categoria": "bug", "prioridad": "media"}},
+  {"input": "Necesito dar acceso a 5 nuevos empleados al sistema", "expected": {"categoria": "acceso", "prioridad": "media"}},
+  {"input": "La API de reportes devuelve campos vacíos para el filtro de fechas", "expected": {"categoria": "datos", "prioridad": "alta"}}
+]
