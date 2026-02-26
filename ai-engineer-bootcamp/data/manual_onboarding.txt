@@ -1,0 +1,47 @@
+Manual de Onboarding — NovaTech Solutions S.A.
+
+Bienvenido a NovaTech Solutions
+
+Nos alegra mucho que te unas a nuestro equipo. NovaTech Solutions es una empresa de tecnología fundada en 2018 en Ciudad de México, especializada en soluciones de software empresarial para el sector financiero y de salud. Contamos con más de 350 colaboradores distribuidos en tres oficinas: Ciudad de México (sede principal), Guadalajara y Monterrey. Nuestra misión es transformar procesos empresariales mediante tecnología innovadora, accesible y segura.
+
+Tu primer día
+
+Tu primer día comenzará a las 9:00 AM en recepción, donde te recibirá un miembro del equipo de People & Culture. Recibirás tu credencial de acceso, tu equipo de cómputo (laptop con las especificaciones que elegiste durante el proceso de contratación) y una mochila de bienvenida con artículos de la empresa. Después te acompañarán a tu área de trabajo, donde ya estará listo tu escritorio con monitor externo, teclado y mouse.
+
+Durante la primera hora tendrás una sesión de orientación general donde conocerás la historia de la empresa, nuestra estructura organizacional y los valores que nos guían: innovación, colaboración, transparencia y compromiso con el cliente. También recibirás acceso a nuestra plataforma interna llamada NovaHub, donde encontrarás toda la documentación, políticas y herramientas que necesitas.
+
+Primera semana — Plan de inmersión
+
+Durante tu primera semana seguirás un plan de inmersión estructurado. El lunes es orientación general y configuración de tu equipo. El martes tendrás sesiones con tu manager directo para revisar tus objetivos de los primeros 90 días y conocer al equipo. El miércoles participarás en una sesión técnica donde conocerás nuestra arquitectura de software, repositorios principales y metodología de desarrollo. El jueves tendrás reuniones con equipos clave con los que colaborarás frecuentemente. El viernes es un día más relajado donde podrás terminar de configurar tu entorno de desarrollo y comenzar con tu primera tarea asignada.
+
+Herramientas y accesos
+
+En NovaTech utilizamos las siguientes herramientas principales. Para comunicación usamos Slack como herramienta principal de mensajería, con canales organizados por equipo y proyecto. El correo electrónico corporativo es mediante Google Workspace. Para gestión de proyectos utilizamos Jira para el seguimiento de tareas y sprints, y Confluence para documentación técnica y de producto. Nuestro código vive en GitHub Enterprise, y utilizamos GitHub Actions para integración y despliegue continuo. Para diseño, el equipo de UX trabaja con Figma. Las videollamadas se realizan por Google Meet.
+
+Tu manager te agregará a los canales de Slack relevantes durante tu primera semana. Si necesitas acceso adicional a alguna herramienta, puedes solicitarlo a través del portal de TI en NovaHub o enviando un correo a soporte@novatech.mx.
+
+Cultura y valores
+
+En NovaTech creemos firmemente en la cultura de feedback continuo. Realizamos reuniones one-on-one semanales entre cada colaborador y su manager, retrospectivas de sprint cada dos semanas, y evaluaciones de desempeño trimestrales. Fomentamos un ambiente donde todos pueden expresar ideas, preocupaciones y sugerencias sin temor.
+
+Nuestro código de vestimenta es casual. No tenemos restricciones específicas salvo para reuniones con clientes externos, donde pedimos vestimenta business casual. Contamos con áreas de descanso en todas las oficinas con café, fruta y snacks disponibles de forma gratuita. También tenemos una sala de juegos con futbolito, ping-pong y consolas de videojuegos para los momentos de descanso.
+
+Horario y modalidad de trabajo
+
+Nuestro horario base es de 9:00 AM a 6:00 PM con una hora de comida. Sin embargo, ofrecemos flexibilidad horaria: puedes iniciar tu jornada entre las 8:00 AM y las 10:00 AM, ajustando tu hora de salida proporcionalmente. Trabajamos en modalidad híbrida, con tres días presenciales (lunes, martes y jueves) y dos días de trabajo remoto (miércoles y viernes). Si necesitas un esquema diferente por razones personales, puedes conversarlo con tu manager y el equipo de People & Culture.
+
+Para el trabajo remoto, es indispensable contar con una conexión a internet estable de al menos 20 Mbps y un espacio adecuado para trabajar. La empresa proporciona un subsidio mensual de $1,500 MXN para gastos de home office (internet, electricidad, etc.) que se deposita junto con tu nómina.
+
+Beneficios principales
+
+Como colaborador de NovaTech tienes acceso a los siguientes beneficios desde tu primer día. Seguro de gastos médicos mayores con cobertura para ti y tu familia directa (cónyuge e hijos). Seguro de vida por 24 meses de salario. Vales de despensa por el 10% de tu salario mensual. Fondo de ahorro con aportación de la empresa del 5% de tu salario. Acceso a plataformas de aprendizaje en línea como Platzi, Udemy Business y O'Reilly. Descuentos corporativos en gimnasios, restaurantes y tiendas de tecnología. Día libre en tu cumpleaños.
+
+Proceso de evaluación durante periodo de prueba
+
+Tu periodo de prueba es de 90 días. Durante este tiempo tendrás checkpoints formales al día 30, 60 y 90. En cada checkpoint, tu manager evaluará tu progreso respecto a los objetivos definidos, tu integración con el equipo y tu alineación con los valores de la empresa. Al final del periodo de 90 días, recibirás una evaluación formal que determinará tu continuidad en la empresa. La gran mayoría de los nuevos colaboradores completan exitosamente su periodo de prueba, así que no te preocupes: enfócate en aprender, preguntar y contribuir.
+
+Contactos clave
+
+Si tienes dudas durante tus primeras semanas, estos son los contactos principales. Para temas administrativos y de nómina, contacta a People & Culture en people@novatech.mx. Para problemas técnicos con tu equipo o accesos, contacta a Soporte TI en soporte@novatech.mx o en el canal de Slack #soporte-ti. Para dudas sobre tu rol o proyectos, habla directamente con tu manager. Para temas de bienestar y salud, contacta al equipo de Wellness en wellness@novatech.mx.
+
+Recuerda que no hay preguntas tontas. Todos pasamos por este proceso y estamos aquí para ayudarte a integrarte de la mejor manera. ¡Bienvenido a NovaTech!

@@ -1,0 +1,74 @@
+Proceso de Soporte Técnico Interno — NovaTech Solutions S.A.
+
+Versión 3.2 — Vigente desde marzo 2025
+Responsable: Departamento de Tecnología de la Información
+
+Propósito
+
+Este documento describe el proceso completo para la gestión de solicitudes de soporte técnico interno en NovaTech Solutions. El objetivo es garantizar que todos los colaboradores reciban asistencia técnica oportuna y de calidad para mantener su productividad y la continuidad operativa de la empresa.
+
+Canales de soporte
+
+NovaTech ofrece tres canales principales para solicitar soporte técnico. El primer canal es el portal de soporte en NovaHub, donde puedes crear tickets detallados con capturas de pantalla y descripción del problema. Este es el canal preferido para problemas no urgentes. El segundo canal es el canal de Slack #soporte-ti, ideal para consultas rápidas y problemas que necesitan atención en menos de 2 horas. El tercer canal es el correo electrónico soporte@novatech.mx, disponible para colaboradores que no tengan acceso a NovaHub o Slack temporalmente. Existe también una línea telefónica de emergencia (extensión 500) disponible las 24 horas para incidentes críticos que afecten la operación de la empresa.
+
+Clasificación de tickets
+
+Todos los tickets de soporte se clasifican en cuatro niveles de prioridad. Prioridad Crítica (P1): afecta a múltiples usuarios o sistemas de producción están caídos. Tiempo de respuesta máximo de 30 minutos. Tiempo de resolución objetivo de 4 horas. Ejemplos: caída del servidor de correo, falla en el sistema de facturación, brecha de seguridad detectada.
+
+Prioridad Alta (P2): afecta el trabajo de un usuario de forma completa, no puede realizar sus funciones. Tiempo de respuesta máximo de 2 horas. Tiempo de resolución objetivo de 8 horas. Ejemplos: laptop que no enciende, pérdida de acceso a herramientas críticas, virus o malware detectado en equipo.
+
+Prioridad Media (P3): afecta parcialmente el trabajo del usuario, puede continuar con otras tareas. Tiempo de respuesta máximo de 8 horas. Tiempo de resolución objetivo de 24 horas. Ejemplos: problemas con impresora, lentitud en aplicaciones, solicitud de instalación de software.
+
+Prioridad Baja (P4): no afecta el trabajo inmediato del usuario. Tiempo de respuesta máximo de 24 horas. Tiempo de resolución objetivo de 72 horas. Ejemplos: solicitud de periféricos adicionales, cambio de configuración de monitor, consultas sobre mejores prácticas.
+
+Proceso de creación de tickets
+
+Para crear un ticket en NovaHub, sigue estos pasos. Paso uno: ingresa a NovaHub y selecciona la sección Soporte Técnico. Paso dos: haz clic en Nuevo Ticket. Paso tres: selecciona la categoría del problema entre las opciones disponibles: Hardware, Software, Redes y Conectividad, Accesos y Permisos, Seguridad, o General. Paso cuatro: describe el problema de forma clara y detallada. Incluye qué estabas haciendo cuando ocurrió el problema, qué mensaje de error apareció (si aplica), desde cuándo ocurre el problema, y si has intentado alguna solución. Paso cinco: adjunta capturas de pantalla o archivos relevantes. Paso seis: selecciona la prioridad sugerida (el equipo de TI puede ajustarla según su evaluación). Paso siete: envía el ticket.
+
+Recibirás un número de ticket (formato ST-XXXX) y un correo de confirmación. Puedes consultar el estado de tu ticket en cualquier momento desde NovaHub.
+
+Flujo de atención
+
+Una vez creado el ticket, el flujo de atención es el siguiente. El ticket ingresa a la cola de soporte y es asignado automáticamente a un técnico disponible según la categoría y prioridad. El técnico asignado te contactará dentro del tiempo de respuesta establecido para tu nivel de prioridad. Si el problema puede resolverse de forma remota, el técnico se conectará a tu equipo mediante la herramienta de escritorio remoto (con tu autorización explícita). Si el problema requiere atención presencial, el técnico coordinará una visita a tu ubicación. Una vez resuelto el problema, el ticket se marcará como Resuelto y recibirás una encuesta de satisfacción.
+
+Si no estás conforme con la resolución, puedes reabrir el ticket dentro de las 48 horas siguientes con un comentario explicando por qué no se resolvió tu problema.
+
+Escalamiento
+
+Si tu problema no se resuelve dentro del tiempo objetivo, se activa el proceso de escalamiento automático. Primer nivel de escalamiento: se notifica al líder del equipo de soporte, quien reasigna el ticket o asigna recursos adicionales. Segundo nivel de escalamiento: se notifica al gerente de TI, quien puede involucrar especialistas externos o proveedores. Tercer nivel de escalamiento: se notifica al director de tecnología (CTO), reservado para incidentes críticos que afecten la operación general de la empresa.
+
+Puedes solicitar un escalamiento manual en cualquier momento si consideras que tu problema requiere atención urgente. Para ello, contacta al líder de soporte a través de Slack (usuario @lider-soporte) o por correo a escalamiento@novatech.mx.
+
+Equipos y reposición
+
+NovaTech asigna equipos de cómputo según el rol del colaborador. Los desarrolladores reciben MacBook Pro M3 o Dell XPS 15 con 32GB de RAM y 512GB de SSD, con monitor externo de 27 pulgadas. Los diseñadores reciben MacBook Pro M3 con 36GB de RAM y 1TB de SSD, con monitor externo 4K de 32 pulgadas. Los roles administrativos y de gestión reciben MacBook Air M2 o Dell Latitude con 16GB de RAM y 256GB de SSD. Todos los equipos incluyen adaptadores, teclado externo y mouse inalámbrico.
+
+El ciclo de renovación de equipos es de 3 años. Cuando tu equipo cumple este periodo, recibirás una notificación para elegir tu nuevo equipo entre las opciones disponibles para tu rol. Los equipos anteriores se donan a organizaciones educativas asociadas a nuestro programa de responsabilidad social.
+
+Si tu equipo presenta fallas antes del ciclo de renovación, el equipo de soporte evaluará si es reparable o si requiere reemplazo anticipado. Los reemplazos de emergencia se procesan en un máximo de 48 horas hábiles, durante las cuales se te asignará un equipo temporal del inventario de respaldo.
+
+Software autorizado
+
+NovaTech mantiene un catálogo de software autorizado que puedes instalar sin necesidad de aprobación. Este catálogo incluye navegadores web (Chrome, Firefox, Brave), herramientas de desarrollo (VS Code, IntelliJ IDEA, Docker, Postman, Git), herramientas de diseño (Figma, Adobe Creative Suite), comunicación (Slack, Zoom, Google Workspace), y utilidades (1Password, Rectangle, Alfred). Si necesitas software que no está en el catálogo, debes crear un ticket de categoría Software con la justificación de la solicitud. El equipo de TI evaluará la solicitud considerando compatibilidad, seguridad y licenciamiento.
+
+Queda estrictamente prohibido instalar software pirata o de fuentes no confiables. Esto constituye una falta grave según el reglamento interno y puede resultar en medidas disciplinarias.
+
+Seguridad de equipos
+
+Todos los colaboradores deben seguir estas prácticas de seguridad en sus equipos de trabajo. Mantener el sistema operativo y aplicaciones actualizados (las actualizaciones críticas se instalan automáticamente). Utilizar 1Password como gestor de contraseñas y nunca reutilizar contraseñas. Activar la autenticación de dos factores (2FA) en todas las cuentas corporativas. Bloquear tu equipo siempre que te alejes de él (Ctrl+L en Windows, Cmd+Control+Q en Mac). No conectar dispositivos USB desconocidos. Reportar inmediatamente cualquier actividad sospechosa o posible brecha de seguridad al canal #seguridad-ti o a seguridad@novatech.mx.
+
+El equipo de seguridad realiza auditorías trimestrales de los equipos corporativos. Estas auditorías verifican el estado de actualizaciones, la presencia de software no autorizado y el cumplimiento de las políticas de seguridad.
+
+Soporte para trabajo remoto
+
+Para colaboradores en modalidad remota, el soporte técnico funciona de la siguiente manera. Los problemas de software y accesos se atienden de forma remota mediante escritorio compartido. Los problemas de hardware se atienden con envío de equipo de reemplazo por paquetería express (entrega en 24 a 48 horas en zona metropolitana, 48 a 72 horas en el resto del país). Los problemas de conectividad a internet del colaborador no son responsabilidad de TI, pero podemos orientarte con tu proveedor de internet si lo necesitas.
+
+Si trabajas de forma remota y experimentas un problema crítico que impide tu trabajo, contacta a tu manager y al equipo de soporte simultáneamente. Se te asignará una solución temporal mientras se resuelve el problema principal.
+
+Métricas y mejora continua
+
+El equipo de soporte técnico mide su desempeño con las siguientes métricas. Tiempo promedio de primera respuesta, cuya meta es menor a 1 hora para todos los tickets. Tiempo promedio de resolución, cuya meta es menor a 12 horas. Tasa de resolución en primer contacto, cuya meta es mayor al 70%. Satisfacción del usuario (encuesta post-ticket), cuya meta es mayor a 4.5 sobre 5. Estas métricas se publican mensualmente en NovaHub y se revisan en la reunión mensual del departamento de TI.
+
+Contacto del equipo de soporte
+
+El equipo de soporte técnico está disponible de lunes a viernes de 8:00 AM a 7:00 PM. Fuera de este horario, la línea de emergencia (extensión 500) está disponible para incidentes críticos P1 únicamente. Los canales principales son el portal NovaHub (canal preferido), el Slack #soporte-ti, el correo soporte@novatech.mx, y la extensión telefónica 500 para emergencias.
