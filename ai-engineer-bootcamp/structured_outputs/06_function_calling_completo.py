@@ -8,6 +8,7 @@ import os
 
 from dotenv import load_dotenv
 from openai import OpenAI
+from pydantic import BaseModel, Field
 
 load_dotenv()
 
@@ -16,6 +17,19 @@ client = OpenAI(
     api_key=os.environ.get("GROQ_API_KEY"),
 )
 MODEL = "openai/gpt-oss-120b"
+
+
+class ConceptoFactura(BaseModel):
+    descripcion: str = Field(description="Descripción del concepto facturado.")
+    cantidad: int = Field(description="Cantidad del concepto.")
+    precio_unitario: float = Field(description="Precio unitario del concepto.")
+    total: float = Field(description="Total del concepto (cantidad x precio_unitario).")
+class Factura(BaseModel):
+    emisor: str = Field(description="Nombre del emisor de la factura.")
+    receptor: str = Field(description="Nombre del receptor de la factura.")
+    conceptos: list[ConceptoFactura] = Field(description="Lista de conceptos facturados.")
+    total: float = Field(description="Total de la factura.")
+    fecha: str = Field(description="Fecha de emisión de la factura en formato YYYY-MM-DD.")
 
 # --- Definición de la tool ---
 tools = [
@@ -50,7 +64,7 @@ tools = [
 
 
 # --- Función simulada ---
-def buscar_producto(query: str, categoria: str | None = None) -> list[dict]:
+def buscar_producto(query: str, categoria: str | None = None, precio: float | None = None) -> list[dict]:
     """Simula una búsqueda en base de datos."""
     productos = [
         {"nombre": "Laptop Pro 15", "precio": 24999, "categoria": "electrónica"},
@@ -63,14 +77,21 @@ def buscar_producto(query: str, categoria: str | None = None) -> list[dict]:
     for producto in productos:
         if producto["categoria"] == categoria:
             consulta.append(producto)
+        if producto["precio"] == precio:
+            consulta.append(producto)
     return consulta
 
 
 # === PASO 1: Enviar mensaje + tools al modelo ===
 print("=== Paso 1: Enviando mensaje al modelo ===")
+
+input_order = input("Por favor indica el producto que estás buscando...")
+
 messages = [
-    {"role": "user", "content": "¿Qué laptops tienen disponibles?"},
+    {"role": "user", "content": input_order},
 ]
+
+
 
 response = client.chat.completions.create(
     model=MODEL,

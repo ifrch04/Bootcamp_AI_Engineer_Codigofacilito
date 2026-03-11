@@ -39,7 +39,7 @@ print("Intentando crear contacto con datos inválidos...")
 try:
     contacto_invalido = Contacto(
         nombre="Pedro",
-        email="no-es-un-email",
+        email="correo@correo.com",
         edad=30,
     )
 

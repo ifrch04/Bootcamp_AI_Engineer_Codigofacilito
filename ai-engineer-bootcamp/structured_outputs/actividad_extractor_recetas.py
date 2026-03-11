@@ -9,14 +9,23 @@ import os
 from dotenv import load_dotenv
 from openai import OpenAI
 from pydantic import BaseModel, Field
+from ollama import chat
 
 load_dotenv()
+#
+#client = OpenAI(
+#    base_url="https://api.groq.com/openai/v1",
+#    api_key=os.environ.get("GROQ_API_KEY"),
+#)
+#MODEL = "openai/gpt-oss-120b"
 
 client = OpenAI(
-    base_url="https://api.groq.com/openai/v1",
-    api_key=os.environ.get("GROQ_API_KEY"),
+    base_url="http://localhost:11434/v1",
+    api_key="ollama",  # requerido pero ignorado
 )
-MODEL = "openai/gpt-oss-120b"
+
+MODEL = "qwen3-coder:latest" 
+
 
 
 # =============================================
@@ -35,7 +44,8 @@ class Receta(BaseModel):
     dificultad: str = Field(description="Nivel de dificultad: fácil, media o difícil.")
     ingredientes: list[Ingrediente] = Field(description="Lista de ingredientes.")
     pasos: list[str] = Field(description="Pasos de preparación en orden.")
-
+    porciones: int = Field(default=None, description="Número de porciones que rinde la receta.")
+    costo_preparacion: float = Field(default=None, description="Costo estimado de preparación en moneda local.")
 
 print("=" * 60)
 print("  PARTE 1: Contrato Pydantic")
@@ -53,6 +63,7 @@ SYSTEM_PROMPT = (
     "informales (como 'un cuarto de kilo' o 'al gusto') a números "
     "precisos usando tu mejor estimación. IMPORTANTE: Usa exactamente "
     "los nombres de campo del schema (nombre, cantidad, unidad)."
+    "Por favor también calcula el costo con ingredientes de calidad y las porciones basándote en los ingredientes y cantidades, usando precios promedio locales."
 )
 
 texto_chilaquiles = """
@@ -85,7 +96,7 @@ def extraer_receta(texto: str) -> Receta:
 def imprimir_receta(receta: Receta) -> None:
     """Imprime una receta formateada."""
     print(f"\n  {receta.titulo.upper()}")
-    print(f"  Tiempo: {receta.tiempo_minutos} min | Dificultad: {receta.dificultad}")
+    print(f"  Tiempo: {receta.tiempo_minutos} min | Dificultad: {receta.dificultad} | Costo: ${receta.costo_preparacion:.2f} | Porciones: {receta.porciones}")
     print("-" * 50)
     print("  Ingredientes:")
     for ing in receta.ingredientes:

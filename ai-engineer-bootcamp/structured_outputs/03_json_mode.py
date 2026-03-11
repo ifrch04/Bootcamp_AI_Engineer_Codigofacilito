@@ -44,6 +44,7 @@ response = client.chat.completions.create(
 contenido = response.choices[0].message.content
 print("Respuesta cruda:")
 print(contenido)
+print(response.choices[0].message)
 print()
 
 # Parsear el JSON
