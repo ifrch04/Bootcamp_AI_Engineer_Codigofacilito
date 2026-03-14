@@ -1,4 +1,4 @@
-"""Provider-agnostic LLM client abstraction (Gemini & Groq)."""
+"""Provider-agnostic LLM client abstraction (Gemini & Groq via OpenAI API)."""
 
 from __future__ import annotations
 
@@ -49,7 +49,7 @@ class LLMClient:
             # The SDK reads GEMINI_API_KEY from environment variables.
             self.client = genai.Client()
         elif self.provider == "groq":
-            from groq import Groq
+            from openai import OpenAI
 
             api_key = os.environ.get("GROQ_API_KEY", "")
             if not api_key:
@@ -57,7 +57,10 @@ class LLMClient:
             self.model = model or os.environ.get(
                 "GROQ_MODEL", "llama-3.3-70b-versatile"
             )
-            self.client = Groq(api_key=api_key)
+            base_url = os.environ.get(
+                "GROQ_BASE_URL", "https://api.groq.com/openai/v1"
+            )
+            self.client = OpenAI(api_key=api_key, base_url=base_url)
         else:
             raise ValueError(
                 f"Unsupported provider '{self.provider}'. Supported: 'gemini', 'groq'."
