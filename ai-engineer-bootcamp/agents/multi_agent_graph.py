@@ -5,8 +5,10 @@ Clase 11: Orquestación supervisor-workers con bucle de calidad
 Usa GPT-OSS-120B vía Groq (OpenAI-compatible endpoint)
 """
 
+import logging
 import os
 import operator
+from pathlib import Path
 from typing import Literal
 from typing_extensions import TypedDict, Annotated
 
@@ -20,6 +22,13 @@ from langchain_core.messages import (
     HumanMessage,
 )
 from langgraph.graph import StateGraph, START, END
+
+# RAG pipeline (clases 5-7)
+from rag.vectorstore import create_vectorstore, search as vector_search, SearchResult
+from rag.ingestion import load_directory, chunk_by_paragraphs, Chunk
+from rag.retrieval import HybridRetriever, rerank
+
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -86,11 +95,11 @@ fallback_llm = ChatOpenAI(
 class DocOpsState(TypedDict):
     """Estado compartido entre todos los agentes del sistema."""
     messages: Annotated[list[AnyMessage], operator.add]
-    plan: str
-    search_results: str
-    draft: str
-    feedback: str
-    quality_score: float
+    plan: str  #Resultado del Planner
+    search_results: str  # Resultado del Retriever
+    draft: str  # Resultado del Executor
+    feedback: str  # Resultado del Verifier
+    quality_score: float # Resultado del Verifier
     iteration: int
 
 
@@ -135,31 +144,134 @@ def planner_agent(state: DocOpsState) -> dict:
     return {"plan": response.content, "iteration": 0}
 
 
+# ─── RAG: carga de colección e índice ────────────────────────
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+_CHROMA_DIR = str(PROJECT_ROOT / "chroma_db")
+_DATA_DIR = str(PROJECT_ROOT / "data")
+_COLLECTION_NAME = "docops_multiagent"
+
+_collection = None
+_chunks: list[Chunk] = []
+
+
+def _get_rag_resources():
+    """Inicializa (lazy) la colección ChromaDB y los chunks para el retriever."""
+    global _collection, _chunks
+
+    if _collection is not None:
+        return _collection, _chunks
+
+    # 1. Abrir o crear la colección
+    _collection = create_vectorstore(_COLLECTION_NAME, _CHROMA_DIR)
+
+    # 2. Si la colección está vacía, indexar los documentos de /data
+    if _collection.count() == 0:
+        docs = load_directory(_DATA_DIR)
+        if docs:
+            from rag.vectorstore import index_chunks
+            all_chunks: list[Chunk] = []
+            for doc in docs:
+                all_chunks.extend(chunk_by_paragraphs(doc, max_chunk_size=500))
+            index_chunks(_collection, all_chunks)
+            _chunks = all_chunks
+            logger.info(
+                "Indexados %d chunks de %d documentos en '%s'",
+                len(all_chunks), len(docs), _COLLECTION_NAME,
+            )
+        else:
+            logger.warning("No se encontraron documentos en %s", _DATA_DIR)
+    else:
+        # Colección ya tiene datos — reconstruir chunks para BM25
+        all_data = _collection.get(include=["documents", "metadatas"])
+        _chunks = [
+            Chunk(
+                content=doc,
+                metadata=meta,
+                chunk_id=cid,
+            )
+            for cid, doc, meta in zip(
+                all_data["ids"], all_data["documents"], all_data["metadatas"]
+            )
+        ]
+        logger.info(
+            "Colección '%s' cargada con %d chunks existentes",
+            _COLLECTION_NAME, len(_chunks),
+        )
+
+    return _collection, _chunks
+
+
 # ─── AGENTE 2: RETRIEVER ────────────────────────────────────
 def retriever_agent(state: DocOpsState) -> dict:
     """
-    Busca información relevante en el vector store según el plan.
-    Usa el pipeline RAG construido en clases 5-7.
+    Busca información relevante usando el pipeline RAG (clases 5-7).
+
+    Pipeline:
+      1. Búsqueda híbrida (BM25 + vector) vía HybridRetriever
+      2. Reranking con cross-encoder
+      3. Formato de contexto con fuentes
+
+    Fallback: si el RAG falla, usa el LLM para simular resultados.
     """
-    # TODO: Integrar con rag/retrieval.py de clases anteriores
-    # En producción: docs = vectorstore.similarity_search(plan, k=5)
-    # En producción: context = retrieval.hybrid_search(plan, k=5, rerank=True)
+    query = state["messages"][-1].content
     plan = state["plan"]
+    search_query = f"{query} {plan[:200]}"
 
-    # Para demo/testing sin vector store real:
-    response = llm.invoke([
-        SystemMessage(content=(
-            "Eres un agente de búsqueda. Dado el siguiente plan, "
-            "genera información relevante que podría encontrarse en "
-            "documentos empresariales internos. Simula resultados de búsqueda "
-            "realistas y útiles.\n\n"
-            "Formato: Presenta 3-5 fragmentos de documentos relevantes, "
-            "cada uno con su fuente ficticia."
-        )),
-        HumanMessage(content=f"Plan de búsqueda:\n{plan}")
-    ])
+    try:
+        collection, chunks = _get_rag_resources()
 
-    return {"search_results": response.content}
+        if not chunks:
+            raise ValueError("No hay chunks indexados en la colección")
+
+        # Paso 1: Búsqueda híbrida (BM25 + vector, clase 6)
+        hybrid = HybridRetriever(collection, chunks, alpha=0.5)
+        results: list[SearchResult] = hybrid.search(search_query, top_k=10)
+
+        if not results:
+            raise ValueError("Búsqueda híbrida no retornó resultados")
+
+        # Paso 2: Reranking con cross-encoder (clase 6)
+        reranked = rerank(query, results, top_k=5)
+
+        # Paso 3: Formatear contexto con fuentes
+        context_parts = []
+        for i, r in enumerate(reranked, 1):
+            source = r.metadata.get("source", "desconocida")
+            score = f"{r.score:.3f}"
+            context_parts.append(
+                f"[{i}] (fuente: {source} | score: {score})\n{r.content}"
+            )
+
+        context = "\n\n---\n\n".join(context_parts)
+        logger.info(
+            "Retriever: %d resultados tras reranking (query: %s)",
+            len(reranked), query[:60],
+        )
+
+        return {"search_results": context}
+
+    except Exception as e:
+        # Fallback: búsqueda simulada con LLM
+        logger.warning("RAG pipeline falló (%s), usando fallback LLM", e)
+
+        response = llm.invoke([
+            SystemMessage(content=(
+                "Eres un agente de búsqueda. Dado el siguiente plan, "
+                "genera información relevante que podría encontrarse en "
+                "documentos empresariales internos. Simula resultados de búsqueda "
+                "realistas y útiles.\n\n"
+                "Formato: Presenta 3-5 fragmentos de documentos relevantes, "
+                "cada uno con su fuente ficticia."
+            )),
+            HumanMessage(content=f"Plan de búsqueda:\n{plan}")
+        ])
+
+        return {
+            "search_results": (
+                f"[Fallback — resultados simulados por LLM]\n\n"
+                f"{response.content}"
+            )
+        }
 
 
 # ─── AGENTE 3: EXECUTOR (con fallback) ──────────────────────
@@ -328,7 +440,7 @@ def build_docops_agent():
     return workflow.compile()
 
 
-# Instancia global del agente compilado
+# Instancia global del grafo multiagente compilado
 docops_agent = build_docops_agent()
 
 
