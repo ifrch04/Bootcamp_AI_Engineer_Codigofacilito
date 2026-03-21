@@ -5,3 +5,4 @@ outputs/
 chroma_db/
 .claude/
 *:Zone.Identifier
+.venv/
