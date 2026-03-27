@@ -160,6 +160,7 @@ class QuestionClassification(BaseModel):
         description="Preguntas sobre productos, precios, menú, disponibilidad. Vacío si no hay.",
     )
 
+    #Fallback
 
 # ─── ESTADO COMPARTIDO ──────────────────────────────────────
 class CustomerState(TypedDict):

@@ -1,16 +1,18 @@
 """
 DocOps Agent — Sistema multiagente con LangGraph
 Clase 11: Orquestación supervisor-workers con bucle de calidad
+Clase 12: Memoria persistente y Human-in-the-Loop
 
 Usa GPT-OSS-120B vía Groq (OpenAI-compatible endpoint)
 """
 
+import json
 import logging
 import os
 import operator
 from pathlib import Path
 from typing import Literal
-from typing_extensions import TypedDict, Annotated
+from typing_extensions import TypedDict, Annotated, NotRequired
 
 from dotenv import load_dotenv
 from pydantic import BaseModel, Field
@@ -22,6 +24,11 @@ from langchain_core.messages import (
     HumanMessage,
 )
 from langgraph.graph import StateGraph, START, END
+
+# ─── NUEVOS IMPORTS CLASE 12 ───
+from memory.store import checkpointer
+from agents.hitl import human_gate
+from langgraph.types import Command
 
 # RAG pipeline (clases 5-7)
 from rag.vectorstore import create_vectorstore, search as vector_search, SearchResult
@@ -95,12 +102,13 @@ fallback_llm = ChatOpenAI(
 class DocOpsState(TypedDict):
     """Estado compartido entre todos los agentes del sistema."""
     messages: Annotated[list[AnyMessage], operator.add]
-    plan: str  #Resultado del Planner
+    plan: str          # Resultado del Planner
     search_results: str  # Resultado del Retriever
-    draft: str  # Resultado del Executor
-    feedback: str  # Resultado del Verifier
-    quality_score: float # Resultado del Verifier
+    draft: str         # Resultado del Executor
+    feedback: str      # Resultado del Verifier
+    quality_score: float  # Resultado del Verifier
     iteration: int
+    force_review: NotRequired[bool]  # Clase 12: forzar pausa HITL siempre
 
 
 # ─── CONTRATOS (Structured Output) ──────────────────────────
@@ -405,21 +413,27 @@ def should_revise(state: DocOpsState) -> Literal["accept", "revise"]:
 
 
 # ─── CONSTRUCCIÓN DEL GRAFO ─────────────────────────────────
-def build_docops_agent():
+def build_docops_agent(cp=None):
     """
     Construye el grafo multiagente del DocOps Agent.
 
-    Flujo: START → planner → retriever → executor → verifier → (accept|revise)
-    Bucle: verifier --revise--> executor (con feedback)
-    Salida: verifier --accept--> END
+    Clase 11: planner → retriever → executor → verifier → END
+    Clase 12: planner → retriever → executor → verifier → human_gate → END
+              + checkpointing + HITL
+
+    Args:
+        cp: Checkpointer a usar. Si es None, usa el global de memory.store.
     """
     workflow = StateGraph(DocOpsState)
 
-    # Registrar nodos (agentes)
+    # Registrar nodos (agentes) — Clase 11
     workflow.add_node("planner", planner_agent)
     workflow.add_node("retriever", retriever_agent)
     workflow.add_node("executor", executor_agent)
     workflow.add_node("verifier", verifier_agent)
+
+    # NUEVO Clase 12: nodo de aprobación humana
+    workflow.add_node("human_gate", human_gate)
 
     # Flujo principal (aristas directas)
     workflow.add_edge(START, "planner")
@@ -432,12 +446,16 @@ def build_docops_agent():
         "verifier",
         should_revise,
         {
-            "accept": END,
+            "accept": "human_gate",  # CAMBIO: antes era END
             "revise": "executor",
         },
     )
 
-    return workflow.compile()
+    # NUEVO Clase 12: human_gate → END
+    workflow.add_edge("human_gate", END)
+
+    # CAMBIO Clase 12: compilar CON checkpointer
+    return workflow.compile(checkpointer=cp if cp is not None else checkpointer)
 
 
 # Instancia global del grafo multiagente compilado
@@ -445,17 +463,31 @@ docops_agent = build_docops_agent()
 
 
 # ─── UTILIDADES ──────────────────────────────────────────────
-def invoke_docops(query: str, verbose: bool = False) -> dict:
+def invoke_docops(
+    query: str,
+    thread_id: str = None,
+    verbose: bool = False,
+    force_review: bool = False,
+) -> dict:
     """
-    Invoca el sistema multiagente con una consulta.
+    Invoca el sistema multiagente con persistencia y HITL.
 
     Args:
         query: Consulta del usuario en lenguaje natural
+        thread_id: ID del thread (None = generar uno nuevo)
         verbose: Si True, imprime el estado de cada paso
 
     Returns:
-        dict con keys: answer, quality_score, iterations, plan
+        dict con keys: answer, quality_score, iterations, plan,
+                       interrupted (bool), interrupt_payload (si aplica)
     """
+    import uuid
+
+    if thread_id is None:
+        thread_id = f"docops-{uuid.uuid4().hex[:8]}"
+
+    config = {"configurable": {"thread_id": thread_id}}
+
     initial_state = {
         "messages": [HumanMessage(content=query)],
         "plan": "",
@@ -464,16 +496,18 @@ def invoke_docops(query: str, verbose: bool = False) -> dict:
         "feedback": "",
         "quality_score": 0.0,
         "iteration": 0,
+        "force_review": force_review,
     }
 
     if verbose:
         print(f"\n{_BOLD}{_WHITE}{'═'*60}{_RESET}")
         print(f"{_BOLD}{_WHITE}  🚀 DOCOPS MULTIAGENTE — INICIO DE EJECUCIÓN{_RESET}")
         print(f"{_BOLD}{_WHITE}{'═'*60}{_RESET}")
+        print(f"{_DIM}  Thread: {thread_id}{_RESET}")
         print(f"{_DIM}  Consulta: {query}{_RESET}")
 
         step = 0
-        for event in docops_agent.stream(initial_state, stream_mode="updates"):
+        for event in docops_agent.stream(initial_state, config, stream_mode="updates"):
             for node_name, node_output in event.items():
                 step += 1
                 meta = AGENT_META.get(node_name, {})
@@ -487,11 +521,12 @@ def invoke_docops(query: str, verbose: bool = False) -> dict:
                 print(f"{color}{_DIM}  {desc}{_RESET}")
                 print(f"{color}{'─'*60}{_RESET}")
 
+                if not node_output or not isinstance(node_output, dict):
+                    continue
                 for key, value in node_output.items():
                     if key == "messages":
                         continue
                     preview = str(value)[:300]
-                    # Colores especiales para campos clave
                     if key == "quality_score":
                         score = float(value)
                         score_color = _GREEN if score >= 0.8 else _RED
@@ -507,13 +542,126 @@ def invoke_docops(query: str, verbose: bool = False) -> dict:
         print(f"{_GREEN}{_BOLD}  ✔ EJECUCIÓN COMPLETADA{_RESET}")
         print(f"{_GREEN}{_BOLD}{'═'*60}{_RESET}")
 
-    result = docops_agent.invoke(initial_state)
+    result = docops_agent.invoke(initial_state, config)
+
+    # Verificar si se interrumpió (HITL)
+    interrupted = False
+    interrupt_payload = None
+
+    snapshot = docops_agent.get_state(config)
+    if snapshot.next:
+        # El grafo se pausó — hay un interrupt pendiente
+        interrupted = True
+        # Extraer payload del interrupt
+        if hasattr(snapshot, "tasks") and snapshot.tasks:
+            for task in snapshot.tasks:
+                if hasattr(task, "interrupts") and task.interrupts:
+                    interrupt_payload = task.interrupts[0].value
+
+    if verbose:
+        print(f"\n{'─'*60}")
+        if interrupted:
+            print("⏸️  GRAFO PAUSADO — Esperando decisión humana")
+            if interrupt_payload:
+                print(f"   Riesgo: {interrupt_payload.get('risk_level', '?')}")
+                print(f"   Mensaje: {interrupt_payload.get('message', '')[:200]}")
+        else:
+            print("✅ GRAFO COMPLETADO")
+        print(f"{'─'*60}")
 
     return {
-        "answer": result["draft"],
-        "quality_score": result["quality_score"],
-        "iterations": result["iteration"],
-        "plan": result["plan"],
+        "answer": result.get("draft", ""),
+        "quality_score": result.get("quality_score", 0.0),
+        "iterations": result.get("iteration", 0),
+        "plan": result.get("plan", ""),
+        "thread_id": thread_id,
+        "interrupted": interrupted,
+        "interrupt_payload": interrupt_payload,
+    }
+
+
+def resume_docops(
+    thread_id: str,
+    decision: dict,
+    verbose: bool = False,
+) -> dict:
+    """
+    Reanuda un grafo pausado con la decisión del humano.
+
+    Args:
+        thread_id: ID del thread pausado
+        decision: Decisión del humano, por ejemplo:
+            {"approved": True}
+            {"approved": True, "edited_draft": "texto corregido"}
+            {"approved": False, "reason": "información incorrecta"}
+        verbose: Si True, imprime info de reanudación
+
+    Returns:
+        dict con el resultado final (mismo formato que invoke_docops)
+    """
+    config = {"configurable": {"thread_id": thread_id}}
+
+    if verbose:
+        print(f"Reanudando thread: {thread_id}")
+        print(f"Decisión: {decision}\n")
+
+    result = docops_agent.invoke(Command(resume=decision), config)
+
+    return {
+        "answer": result.get("draft", ""),
+        "quality_score": result.get("quality_score", 0.0),
+        "iterations": result.get("iteration", 0),
+        "thread_id": thread_id,
+        "interrupted": False,
+    }
+
+
+def continue_conversation(
+    thread_id: str,
+    follow_up: str,
+    verbose: bool = False,
+) -> dict:
+    """
+    Continúa una conversación existente con un nuevo mensaje.
+
+    El historial de la conversación se mantiene gracias al checkpointer.
+
+    Args:
+        thread_id: ID del thread existente
+        follow_up: Nuevo mensaje del usuario
+        verbose: Si True, imprime info
+
+    Returns:
+        dict con el resultado (mismo formato que invoke_docops)
+    """
+    config = {"configurable": {"thread_id": thread_id}}
+
+    new_state = {
+        "messages": [HumanMessage(content=follow_up)],
+        "plan": "",
+        "search_results": "",
+        "draft": "",
+        "feedback": "",
+        "quality_score": 0.0,
+        "iteration": 0,
+    }
+
+    if verbose:
+        print(f"Continuando thread: {thread_id}")
+        print(f"Follow-up: {follow_up}\n")
+
+    result = docops_agent.invoke(new_state, config)
+
+    # Verificar interrupciones igual que invoke_docops
+    snapshot = docops_agent.get_state(config)
+    interrupted = bool(snapshot.next)
+
+    return {
+        "answer": result.get("draft", ""),
+        "quality_score": result.get("quality_score", 0.0),
+        "iterations": result.get("iteration", 0),
+        "thread_id": thread_id,
+        "interrupted": interrupted,
     }
 
 
@@ -529,31 +677,108 @@ def visualize_graph():
 
 # ─── MAIN ────────────────────────────────────────────────────
 if __name__ == "__main__":
-    model = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
-    fallback = os.getenv("GROQ_FALLBACK_MODEL", "llama-3.3-70b-versatile")
-
     print(f"\n{_BOLD}{_WHITE}{'═'*60}{_RESET}")
-    print(f"{_BOLD}{_WHITE}  DocOps Agent — Sistema Multiagente con LangGraph{_RESET}")
+    print(f"{_BOLD}{_WHITE}  DocOps Agent v2 — Memoria + Human-in-the-Loop{_RESET}")
     print(f"{_BOLD}{_WHITE}{'═'*60}{_RESET}")
-    print(f"  {_DIM}Modelo principal:{_RESET} {_CYAN}{model} via Groq{_RESET}")
-    print(f"  {_DIM}Modelo fallback: {_RESET} {_YELLOW}{fallback}{_RESET}")
-    print()
-    print(f"  {_DIM}Flujo:{_RESET} {_BLUE}Planner{_RESET} → {_CYAN}Retriever{_RESET} → {_YELLOW}Executor{_RESET} → {_MAGENTA}Verifier{_RESET} → {_GREEN}END{_RESET}")
-    print(f"  {_DIM}Bucle:{_RESET} {_MAGENTA}Verifier{_RESET} {_RED}--revise-->{_RESET} {_YELLOW}Executor{_RESET}")
-    print(f"{_BOLD}{_WHITE}{'═'*60}{_RESET}")
+    print(f"  Modelo:       {os.getenv('GROQ_MODEL', 'gpt-oss-120b')} via Groq")
+    print(f"  Checkpointer: {type(checkpointer).__name__}")
+    print(f"{_BOLD}{_WHITE}{'═'*60}{_RESET}\n")
 
-    query = "¿Cuál es la política de reembolso para clientes premium?"
+    # ─── EJEMPLO 1: Flujo automático (sin HITL) ──────────────
+    print(f"{_BOLD}EJEMPLO 1 — Flujo automático (sin interrupción){_RESET}")
+    print("─" * 60)
+    r1 = invoke_docops(
+        "¿Cuál es la política de reembolso para clientes premium?",
+        thread_id="demo-auto",
+        verbose=True,
+    )
+    score_c = _GREEN if r1["quality_score"] >= 0.8 else _RED
+    print(f"\n  Score:       {score_c}{r1['quality_score']}{_RESET}")
+    print(f"  Interrupted: {r1['interrupted']}")
+    print(f"  Respuesta:   {r1['answer'][:200]}...\n")
 
-    result = invoke_docops(query, verbose=True)
+    # ─── EJEMPLO 2: HITL real — TÚ decides ───────────────────
+    print(f"\n{_BOLD}EJEMPLO 2 — HITL interactivo (force_review=True){_RESET}")
+    print("─" * 60)
+    print(f"{_DIM}El agente procesará la consulta y luego SE PAUSARÁ.")
+    print(f"Tendrás que revisar el draft y tomar una decisión.{_RESET}\n")
 
-    # Respuesta final
-    score = result["quality_score"]
-    score_color = _GREEN if score >= 0.8 else _RED
+    r2 = invoke_docops(
+        "¿Cuál es el proceso para escalar un ticket de soporte?",
+        thread_id="demo-hitl",
+        verbose=True,
+        force_review=True,   # ← garantiza la pausa siempre
+    )
 
-    print(f"\n{_GREEN}{_BOLD}{'─'*60}{_RESET}")
-    print(f"{_GREEN}{_BOLD}  📄 RESPUESTA FINAL{_RESET}")
-    print(f"{_GREEN}{_BOLD}{'─'*60}{_RESET}")
-    print(f"{_WHITE}{result['answer']}{_RESET}")
-    print(f"\n  {_DIM}Score de calidad:{_RESET} {score_color}{_BOLD}{score}{_RESET}")
-    print(f"  {_DIM}Iteraciones:{_RESET}      {_YELLOW}{_BOLD}{result['iterations']}{_RESET}")
-    print()
+    if r2["interrupted"]:
+        payload = r2.get("interrupt_payload") or {}
+
+        print(f"\n{_BOLD}{_YELLOW}{'═'*60}{_RESET}")
+        print(f"{_BOLD}{_YELLOW}  ⏸  GRAFO PAUSADO — El agente espera tu decisión{_RESET}")
+        print(f"{_BOLD}{_YELLOW}{'═'*60}{_RESET}")
+        print(f"\n{_DIM}Draft generado por el agente:{_RESET}\n")
+        draft_preview = payload.get("draft_preview", r2["answer"])
+        for line in draft_preview[:600].split("\n"):
+            print(f"  {line}")
+        print(f"\n{_DIM}Nivel de riesgo:{_RESET} {payload.get('risk_level', '?').upper()}")
+        print(f"{_DIM}Quality score: {_RESET}{r2['quality_score']:.2f}")
+        print(f"\n{_GREEN}  [a]{_RESET} Aprobar y publicar")
+        print(f"{_YELLOW}  [e]{_RESET} Editar el draft y aprobar")
+        print(f"{_RED}  [r]{_RESET} Rechazar")
+        print(f"{_BOLD}{_YELLOW}{'─'*60}{_RESET}")
+
+        # ── Input real del usuario ──
+        decision = None
+        while decision is None:
+            try:
+                choice = input(f"\n{_BOLD}Tu decisión [a/e/r]: {_RESET}").strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                print(f"\n{_DIM}Sin input — aprobando automáticamente.{_RESET}")
+                decision = {"approved": True}
+                break
+
+            if choice in ("a", ""):
+                print(f"{_GREEN}✓ Aprobado{_RESET}")
+                decision = {"approved": True}
+
+            elif choice == "e":
+                print(f"{_YELLOW}Escribe el draft corregido.")
+                print(f"{_DIM}(Línea con solo '###' para terminar){_RESET}")
+                lines = []
+                try:
+                    while True:
+                        line = input()
+                        if line.strip() == "###":
+                            break
+                        lines.append(line)
+                except EOFError:
+                    pass
+                edited = "\n".join(lines).strip()
+                print(f"{_GREEN}✓ Draft editado ({len(edited)} chars){_RESET}")
+                decision = {"approved": True, "edited_draft": edited}
+
+            elif choice == "r":
+                try:
+                    reason = input(f"{_RED}Motivo del rechazo: {_RESET}").strip()
+                except (EOFError, KeyboardInterrupt):
+                    reason = "Rechazado por el supervisor"
+                print(f"{_RED}✗ Rechazado{_RESET}")
+                decision = {"approved": False, "reason": reason or "Rechazado"}
+
+            else:
+                print(f"{_DIM}Opción no reconocida. Escribe a, e o r.{_RESET}")
+
+        # ── Reanudar con la decisión del humano ──
+        print(f"\n{_DIM}Reanudando con decisión: {decision}{_RESET}")
+        final = resume_docops("demo-hitl", decision, verbose=True)
+
+        print(f"\n{_GREEN}{_BOLD}{'─'*60}{_RESET}")
+        print(f"{_GREEN}{_BOLD}  Respuesta final{_RESET}")
+        print(f"{_GREEN}{_BOLD}{'─'*60}{_RESET}")
+        print(final["answer"])
+        print(f"{_GREEN}{'─'*60}{_RESET}")
+
+    else:
+        # Esto no debería ocurrir con force_review=True
+        print(f"\n{_DIM}No hubo interrupción (score={r2['quality_score']:.2f}){_RESET}")
+        print(f"Respuesta: {r2['answer'][:300]}")
