@@ -1,0 +1,58 @@
+[
+  {
+    "id": "g_001_vacaciones_dias",
+    "query": "¿Cuántos días de vacaciones tengo al año?",
+    "golden_answer": "Tienes derecho a 20 días hábiles de vacaciones al año, según la política de Acme Corp.",
+    "required_keywords": ["20", "días"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_002_vacaciones_acumular",
+    "query": "¿Puedo acumular vacaciones para el año siguiente?",
+    "golden_answer": "Sí, puedes acumular hasta 5 días no usados de vacaciones para el año siguiente.",
+    "required_keywords": ["5", "acumular"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_003_horario",
+    "query": "¿Cuál es el horario laboral estándar?",
+    "golden_answer": "El horario estándar es de 9:00 a 18:00 de lunes a viernes, con una hora libre para almorzar.",
+    "required_keywords": ["9", "18"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_004_vales_comida",
+    "query": "¿Hay vales de comida para los empleados?",
+    "golden_answer": "Sí, Acme Corp ofrece vales de comida por valor de 11 EUR por día trabajado.",
+    "required_keywords": ["11", "vales"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_005_vestimenta_viernes",
+    "query": "¿Qué ropa puedo llevar los viernes?",
+    "golden_answer": "Los viernes son de vestimenta libre en Acme Corp.",
+    "required_keywords": ["viernes", "libre"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_006_home_office_dias",
+    "query": "¿Cuántos días puedo trabajar desde casa?",
+    "golden_answer": "Puedes trabajar desde casa hasta 3 días por semana, previa coordinación con tu responsable directo.",
+    "required_keywords": ["3", "casa"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_007_home_office_obligatorios",
+    "query": "¿Qué días tengo que ir obligatoriamente a la oficina?",
+    "golden_answer": "Los martes y jueves son obligatoriamente presenciales en Acme Corp.",
+    "required_keywords": ["martes", "jueves"],
+    "min_similarity": 0.55
+  },
+  {
+    "id": "g_008_capacitacion_presupuesto",
+    "query": "¿Cuánto presupuesto hay para formación?",
+    "golden_answer": "Acme Corp asigna 1500 EUR anuales por empleado para formación continua.",
+    "required_keywords": ["1500"],
+    "min_similarity": 0.55
+  }
+]

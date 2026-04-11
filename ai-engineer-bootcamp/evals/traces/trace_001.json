@@ -1,0 +1,12 @@
+{
+  "trace_id": "trace_001",
+  "query": "¿Cuántos días de vacaciones tengo?",
+  "captured_at": "2026-04-10T22:53:06.672904+00:00",
+  "output": {
+    "answer": "Tienes 20 días hábiles de vacaciones al año.",
+    "sources": [
+      "hr_vacaciones"
+    ],
+    "confidence": 0.97
+  }
+}

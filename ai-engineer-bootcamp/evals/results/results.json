@@ -1,0 +1,145 @@
+{
+  "ran_at": "2026-04-11T00:05:26.642756+00:00",
+  "total": 10,
+  "passed": 10,
+  "pass_rate": 1.0,
+  "by_category": {
+    "factual": {
+      "passed": 5,
+      "total": 5,
+      "pass_rate": 1.0
+    },
+    "inferential": {
+      "passed": 3,
+      "total": 3,
+      "pass_rate": 1.0
+    },
+    "out_of_scope": {
+      "passed": 2,
+      "total": 2,
+      "pass_rate": 1.0
+    }
+  },
+  "results": [
+    {
+      "id": "c_001",
+      "category": "factual",
+      "query": "¿Cuántos días de vacaciones tengo al año?",
+      "actual": "Tienes 20 días hábiles de vacaciones al año.",
+      "golden": "Tienes derecho a 20 días hábiles de vacaciones al año.",
+      "similarity": 0.927,
+      "min_sim": 0.55,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_002",
+      "category": "factual",
+      "query": "¿De qué hora a qué hora trabajo?",
+      "actual": "El horario estándar es de 9:00 a 18:00 de lunes a viernes, con una hora libre para almorzar y flexibilidad de entrada de 30 minutos antes o después.",
+      "golden": "El horario estándar es de 9:00 a 18:00 de lunes a viernes.",
+      "similarity": 0.8954,
+      "min_sim": 0.55,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_003",
+      "category": "factual",
+      "query": "¿Cuánto dinero recibo en vales de comida por día?",
+      "actual": "Recibes 11 EUR por día en vales de comida.",
+      "golden": "Acme Corp ofrece vales de comida por valor de 11 EUR por día trabajado.",
+      "similarity": 0.6491,
+      "min_sim": 0.55,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_004",
+      "category": "factual",
+      "query": "¿Cuántos días puedo trabajar desde casa?",
+      "actual": "Puedes trabajar desde casa hasta 3 días por semana, siempre que coordines con tu responsable directo.",
+      "golden": "Puedes trabajar desde casa hasta 3 días por semana.",
+      "similarity": 0.8979,
+      "min_sim": 0.55,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_005",
+      "category": "factual",
+      "query": "¿Cuánto presupuesto anual tengo para formación?",
+      "actual": "Tienes un presupuesto anual de 1500 EUR para formación.",
+      "golden": "Tienes 1500 EUR anuales para formación continua.",
+      "similarity": 0.8356,
+      "min_sim": 0.55,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_006",
+      "category": "inferential",
+      "query": "Si quiero salir 30 minutos antes, ¿es posible?",
+      "actual": "Sí, puedes salir 30 minutos antes siempre que ajustes tu hora de entrada y cumplas con las 8 horas diarias de trabajo.",
+      "golden": "Sí, hay flexibilidad de entrada y salida de 30 minutos siempre que cumplas las 8 horas diarias.",
+      "similarity": 0.8654,
+      "min_sim": 0.5,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_007",
+      "category": "inferential",
+      "query": "Si tengo una reunión con un cliente externo, ¿qué debo ponerme?",
+      "actual": "Para reuniones con clientes externos se exige traje formal.",
+      "golden": "Para reuniones con clientes externos se exige traje formal.",
+      "similarity": 1.0,
+      "min_sim": 0.5,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_008",
+      "category": "inferential",
+      "query": "¿Puedo trabajar desde casa los martes?",
+      "actual": "No, los martes son obligatoriamente presenciales y no se pueden trabajar desde casa ese día.",
+      "golden": "No, los martes son obligatoriamente presenciales.",
+      "similarity": 0.8431,
+      "min_sim": 0.5,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_009",
+      "category": "out_of_scope",
+      "query": "¿Cuál es la capital de Australia?",
+      "actual": "No tengo información sobre eso en mis fuentes.",
+      "golden": "No tengo información sobre eso en mis fuentes.",
+      "similarity": 1.0,
+      "min_sim": 0.45,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    },
+    {
+      "id": "c_010",
+      "category": "out_of_scope",
+      "query": "¿Cuánto cuesta un Tesla Model 3?",
+      "actual": "No tengo información sobre eso en mis fuentes.",
+      "golden": "No tengo información sobre eso en mis fuentes.",
+      "similarity": 1.0,
+      "min_sim": 0.45,
+      "keywords_missing": [],
+      "passed": true,
+      "error": null
+    }
+  ]
+}
